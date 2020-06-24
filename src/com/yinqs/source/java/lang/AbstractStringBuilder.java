@@ -29,6 +29,11 @@ import sun.misc.FloatingDecimal;
 import java.util.Arrays;
 
 /**
+ *      可变字符串，是StringBuilder和StringBuffer的父类，
+ *      区别在于：
+ *             StringBuffer对字符串基本上所有操作都加上了Synchronized关键字，
+ *             是线程安全的，在使用如inser() indexOf()等方法时要注意使用的是不是
+ *             同步方法
  * A mutable sequence of characters.
  * <p>
  * Implements a modifiable string. At any point in time it contains some
@@ -91,6 +96,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
     }
 
     /**
+     *      容量检查
      * Ensures that the capacity is at least equal to the specified minimum.
      * If the current capacity is less than the argument, then a new internal
      * array is allocated with greater capacity. The new capacity is the
@@ -131,6 +137,8 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
      * Some VMs reserve some header words in an array.
      * Attempts to allocate larger arrays may result in
      * OutOfMemoryError: Requested array size exceeds VM limit
+     *
+     * 超过这个值的数组大小，JVM会报OOM的错误
      */
     private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
@@ -221,6 +229,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
      * <p>
      * The index argument must be greater than or equal to
      * {@code 0}, and less than the length of this sequence.
+     *
      *
      * <p>If the {@code char} value specified by the index is a
      * <a href="Character.html#unicode">surrogate</a>, the surrogate

@@ -44,6 +44,7 @@ import java.util.regex.PatternSyntaxException;
  * string literals in Java programs, such as {@code "abc"}, are
  * implemented as instances of this class.
  * <p>
+ *     String 类型为常量，创建之后不能被更改，字符串缓冲区支持可变字符串。
  * Strings are constant; their values cannot be changed after they
  * are created. String buffers support mutable strings.
  * Because String objects are immutable they can be shared. For example:
@@ -71,6 +72,9 @@ import java.util.regex.PatternSyntaxException;
  * lowercase. Case mapping is based on the Unicode Standard version
  * specified by the {@link java.lang.Character Character} class.
  * <p>
+ *     Java中String类型支持+运算符操作，原理是通过StringBuilder或StringBuffer
+ *     中的append(arg)操作完成的，字符串的转换是用过从写Object类中的ToString()方法
+ *     完成的。
  * The Java language provides special support for the string
  * concatenation operator (&nbsp;+&nbsp;), and for conversion of
  * other objects to strings. String concatenation is implemented
@@ -110,7 +114,9 @@ import java.util.regex.PatternSyntaxException;
 
 public final class String
     implements java.io.Serializable, Comparable<String>, CharSequence {
-    /** The value is used for character storage. */
+    /** The value is used for character storage.
+     *  字符串存储单元
+     * */
     private final char value[];
 
     /** Cache the hash code for the string */
@@ -1158,14 +1164,17 @@ public final class String
         char v2[] = anotherString.value;
 
         int k = 0;
+        // 先逐一字符的比较，有不相等字符是返回字符差值
         while (k < lim) {
             char c1 = v1[k];
             char c2 = v2[k];
             if (c1 != c2) {
+                // "abc" "acd" ==> return 'b' - 'c'
                 return c1 - c2;
             }
             k++;
         }
+        // "abc" "abcd" ==> return 3-4 = 1
         return len1 - len2;
     }
 
@@ -1188,6 +1197,7 @@ public final class String
         // use serialVersionUID from JDK 1.2.2 for interoperability
         private static final long serialVersionUID = 8575799808933029326L;
 
+        // 忽略大小写比较
         public int compare(String s1, String s2) {
             int n1 = s1.length();
             int n2 = s2.length();
