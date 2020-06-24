@@ -53,11 +53,12 @@ import java.util.function.UnaryOperator;
 import sun.misc.SharedSecrets;
 
 /**
- * 线程安全版的ArrayList，ArrayList中的可变方法通过拷贝一个新的副本数组来实现
+ *      线程安全版的ArrayList，ArrayList中的可变方法通过拷贝一个新的副本数组来实现
  * A thread-safe variant of {@link java.util.ArrayList} in which all mutative
  * operations ({@code add}, {@code set}, and so on) are implemented by
  * making a fresh copy of the underlying array.
  *
+ *      在创建迭代器的时候回产生一个快照
  * <p>This is ordinarily too costly, but may be <em>more</em> efficient
  * than alternatives when traversal operations vastly outnumber
  * mutations, and is useful when you cannot or don't want to
@@ -545,7 +546,7 @@ public class CopyOnWriteArrayList<E>
         try {
             Object[] current = getArray();
             int len = current.length;
-            // 如果快照和当前数组不相等
+            // 如果快照和当前数组不相等，此时的current可能不相等的原因就是并发时其他线程在之前修改了数据
             if (snapshot != current) findIndex: {
                 int prefix = Math.min(index, len);
                 for (int i = 0; i < prefix; i++) {

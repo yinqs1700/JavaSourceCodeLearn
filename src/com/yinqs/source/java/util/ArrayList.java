@@ -56,6 +56,9 @@ import sun.misc.SharedSecrets;
  * before adding a large number of elements using the <tt>ensureCapacity</tt>
  * operation.  This may reduce the amount of incremental reallocation.
  *
+ *      不是线程安全的实现，如果有多个线程操作list且至少有一个线程做出了修改可变操作
+ *      那么在方法外应该实现同步机制
+ *
  * <p><strong>Note that this implementation is not synchronized.</strong>
  * If multiple threads access an <tt>ArrayList</tt> instance concurrently,
  * and at least one of the threads modifies the list structurally, it
@@ -71,6 +74,9 @@ import sun.misc.SharedSecrets;
  * unsynchronized access to the list:<pre>
  *   List list = Collections.synchronizedList(new ArrayList(...));</pre>
  *
+ *
+ *       快速失败机制，在迭代器的使用过程中，每次都会检测是否产生了并发操作，如果产生
+ *       则直接抛异常，避免往后造成不可知的错误
  * <p><a name="fail-fast">
  * The iterators returned by this class's {@link #iterator() iterator} and
  * {@link #listIterator(int) listIterator} methods are <em>fail-fast</em>:</a>
@@ -82,6 +88,8 @@ import sun.misc.SharedSecrets;
  * concurrent modification, the iterator fails quickly and cleanly, rather
  * than risking arbitrary, non-deterministic behavior at an undetermined
  * time in the future.
+ *
+ *      fast-fail机制只用来检测bug
  *
  * <p>Note that the fail-fast behavior of an iterator cannot be guaranteed
  * as it is, generally speaking, impossible to make any hard guarantees in the
@@ -103,7 +111,6 @@ import sun.misc.SharedSecrets;
  * @see     Vector
  * @since   1.2
  */
-
 public class ArrayList<E> extends AbstractList<E>
         implements List<E>, RandomAccess, Cloneable, java.io.Serializable
 {
@@ -127,6 +134,8 @@ public class ArrayList<E> extends AbstractList<E>
     private static final Object[] DEFAULTCAPACITY_EMPTY_ELEMENTDATA = {};
 
     /**
+     *
+     * 存储元素的位置
      * The array buffer into which the elements of the ArrayList are stored.
      * The capacity of the ArrayList is the length of this array buffer. Any
      * empty ArrayList with elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATA
@@ -187,6 +196,8 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
+     *
+     *
      * Trims the capacity of this <tt>ArrayList</tt> instance to be the
      * list's current size.  An application can use this operation to minimize
      * the storage of an <tt>ArrayList</tt> instance.
@@ -248,6 +259,8 @@ public class ArrayList<E> extends AbstractList<E>
     private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
     /**
+     *
+     *      数组扩容操作，每次扩容1.5倍
      * Increases the capacity to ensure that it can hold at least the
      * number of elements specified by the minimum capacity argument.
      *

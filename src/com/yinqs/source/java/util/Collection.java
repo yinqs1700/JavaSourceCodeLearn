@@ -30,6 +30,9 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
+ *
+ *      collection hierarchy 的根接口
+ *
  * The root interface in the <i>collection hierarchy</i>.  A collection
  * represents a group of objects, known as its <i>elements</i>.  Some
  * collections allow duplicate elements and others do not.  Some are ordered
@@ -142,6 +145,7 @@ import java.util.stream.StreamSupport;
  */
 
 public interface Collection<E> extends Iterable<E> {
+
     // Query Operations
 
     /**
@@ -385,6 +389,9 @@ public interface Collection<E> extends Iterable<E> {
     boolean removeAll(Collection<?> c);
 
     /**
+     *      通过Predict谓词的方式传入一个自定义的lambda表达式{filter}实现是否删除
+     *      迭代器迭代到的元素或者抛出异常等操作
+     *
      * Removes all of the elements of this collection that satisfy the given
      * predicate.  Errors or runtime exceptions thrown during iteration or by
      * the predicate are relayed to the caller.
@@ -420,6 +427,8 @@ public interface Collection<E> extends Iterable<E> {
     }
 
     /**
+     *      只保留传入Collection中有的数据
+     *
      * Retains only the elements in this collection that are contained in the
      * specified collection (optional operation).  In other words, removes from
      * this collection all of its elements that are not contained in the

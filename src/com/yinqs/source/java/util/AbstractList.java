@@ -26,6 +26,8 @@
 package java.util;
 
 /**
+ *      提供一个实现List接口且基于随机存取的数据类型所必须的骨架
+ *
  * This class provides a skeletal implementation of the {@link List}
  * interface to minimize the effort required to implement this interface
  * backed by a "random access" data store (such as an array).  For sequential
@@ -36,6 +38,8 @@ package java.util;
  * this class and provide implementations for the {@link #get(int)} and
  * {@link List#size() size()} methods.
  *
+ *      实现可变的list必须实现set(int,Object),add(int,Object)等方法
+ *
  * <p>To implement a modifiable list, the programmer must additionally
  * override the {@link #set(int, Object) set(int, E)} method (which otherwise
  * throws an {@code UnsupportedOperationException}).  If the list is
@@ -45,6 +49,7 @@ package java.util;
  * <p>The programmer should generally provide a void (no argument) and collection
  * constructor, as per the recommendation in the {@link Collection} interface
  * specification.
+ *
  *
  * <p>Unlike the other abstract collection implementations, the programmer does
  * <i>not</i> have to provide an iterator implementation; the iterator and
@@ -278,6 +283,7 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements L
      * {@code remove} method unless the list's {@code remove(int)} method is
      * overridden.
      *
+     *      在面临并发修改的时候回抛出运行时异常，通过modCount来实现异常的抛出
      * <p>This implementation can be made to throw runtime exceptions in the
      * face of concurrent modification, as described in the specification
      * for the (protected) {@link #modCount} field.
@@ -329,11 +335,15 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements L
 
     private class Itr implements Iterator<E> {
         /**
+         *      当前元素的索引，在next之后，返回当前元素，并指向下一元素索引
          * Index of element to be returned by subsequent call to next.
          */
         int cursor = 0;
 
         /**
+         *
+         *      在对list做add remove操作之后会被置位-1，需要调用next()方法
+         *      之后才能继续做增删操作
          * Index of element returned by most recent call to next or
          * previous.  Reset to -1 if this element is deleted by a call
          * to remove.
@@ -341,6 +351,9 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements L
         int lastRet = -1;
 
         /**
+         *
+         *      当检测到expectedModCount != modCount的值不同时，迭代器就会检查到并发修改
+         *      直接抛出ConcurrentModificationException
          * The modCount value that the iterator believes that the backing
          * List should have.  If this expectation is violated, the iterator
          * has detected concurrent modification.
@@ -352,8 +365,10 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements L
         }
 
         public E next() {
+            // 检测是否发生并发修改
             checkForComodification();
             try {
+                // 获取当前元素，并更新cursor和lastRet
                 int i = cursor;
                 E next = get(i);
                 lastRet = i;
@@ -447,6 +462,8 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements L
 
     /**
      * {@inheritDoc}
+     *
+     *         通过是否实现了RandomAccess来选择实现类
      *
      * <p>This implementation returns a list that subclasses
      * {@code AbstractList}.  The subclass stores, in private fields, the
