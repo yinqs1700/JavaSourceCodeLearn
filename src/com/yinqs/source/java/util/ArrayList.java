@@ -77,6 +77,8 @@ import sun.misc.SharedSecrets;
  *
  *       快速失败机制，在迭代器的使用过程中，每次都会检测是否产生了并发操作，如果产生
  *       则直接抛异常，避免往后造成不可知的错误
+ *
+ *
  * <p><a name="fail-fast">
  * The iterators returned by this class's {@link #iterator() iterator} and
  * {@link #listIterator(int) listIterator} methods are <em>fail-fast</em>:</a>
@@ -89,7 +91,7 @@ import sun.misc.SharedSecrets;
  * than risking arbitrary, non-deterministic behavior at an undetermined
  * time in the future.
  *
- *      fast-fail机制只用来检测bug
+ *      fast-fail机制应该只用来检测bug
  *
  * <p>Note that the fail-fast behavior of an iterator cannot be guaranteed
  * as it is, generally speaking, impossible to make any hard guarantees in the

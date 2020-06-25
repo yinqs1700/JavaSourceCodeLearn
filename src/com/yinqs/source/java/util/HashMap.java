@@ -38,6 +38,9 @@ import java.util.function.Function;
 import sun.misc.SharedSecrets;
 
 /**
+ *
+ *      实现Map接口中的方法，与HashTable相似，区别在于hashTable是线程安全的，
+ *      而且不允许存储null
  * Hash table based implementation of the <tt>Map</tt> interface.  This
  * implementation provides all of the optional map operations, and permits
  * <tt>null</tt> values and the <tt>null</tt> key.  (The <tt>HashMap</tt>
@@ -46,25 +49,47 @@ import sun.misc.SharedSecrets;
  * the order of the map; in particular, it does not guarantee that the order
  * will remain constant over time.
  *
+ *      get()和put()操作时间复杂度是常数时间，
+ *      遍历整个map需要的时间取决于，map中桶的数量加上放入元素的k-v映射队
+ *
  * <p>This implementation provides constant-time performance for the basic
  * operations (<tt>get</tt> and <tt>put</tt>), assuming the hash function
  * disperses the elements properly among the buckets.  Iteration over
  * collection views requires time proportional to the "capacity" of the
  * <tt>HashMap</tt> instance (the number of buckets) plus its size (the number
- * of key-value mappings).  Thus, it's very important not to set the initial
+ * of key-value mappings).
+ *
+ *      如果需要较高性能的遍历操作，初始化是容量大小不应设置太大，或者负载因子不应设置过低
+ *
+ * Thus, it's very important not to set the initial
  * capacity too high (or the load factor too low) if iteration performance is
  * important.
- *
+ *      两个重要的初始化参数：
+ *          capacity：初始换是哈希表中的桶的数量
+ *          load factor：负载因子是在自动增加其散列表容量之前允许散列表获得的“满度”的度量。
  * <p>An instance of <tt>HashMap</tt> has two parameters that affect its
  * performance: <i>initial capacity</i> and <i>load factor</i>.  The
  * <i>capacity</i> is the number of buckets in the hash table, and the initial
- * capacity is simply the capacity at the time the hash table is created.  The
- * <i>load factor</i> is a measure of how full the hash table is allowed to
+ * capacity is simply the capacity at the time the hash table is created.
+ *
+ *
+ *      当哈希表中的条目数超过负载因子和当前容量的乘积时，
+ *          rehash when  entries >（load factor） * （capacity）
+ *      哈希表将被重新哈希（即，内部数据结构将被重建），使得哈希表的存储桶数约为两倍
+ *
+ * The <i>load factor</i> is a measure of how full the hash table is allowed to
  * get before its capacity is automatically increased.  When the number of
  * entries in the hash table exceeds the product of the load factor and the
  * current capacity, the hash table is <i>rehashed</i> (that is, internal data
  * structures are rebuilt) so that the hash table has approximately twice the
  * number of buckets.
+ *
+ *      默认load factor为0.75，在时、空成本消耗上做了一个很好的平衡，
+ *      较高的loaf factor会增加出查找成本（影响get 和put操作）
+ *
+ *      设置其初始容量时，应考虑映射中的预期条目数及其负载因子，
+ *      以最大程度地减少重新哈希操作的次数。如果初始容量大于最大条目数除以负载因子，
+ *      则将不会进行任何rehash操作
  *
  * <p>As a general rule, the default load factor (.75) offers a good
  * tradeoff between time and space costs.  Higher values decrease the
@@ -81,10 +106,10 @@ import sun.misc.SharedSecrets;
  * instance, creating it with a sufficiently large capacity will allow
  * the mappings to be stored more efficiently than letting it perform
  * automatic rehashing as needed to grow the table.  Note that using
- * many keys with the same {@code hashCode()} is a sure way to slow
- * down performance of any hash table. To ameliorate impact, when keys
- * are {@link Comparable}, this class may use comparison order among
- * keys to help break ties.
+ *  * many keys with the same {@code hashCode()} is a sure way to slow
+ *  * down performance of any hash table. To ameliorate impact, when keys
+ *  * are {@link Comparable}, this class may use comparison order among
+ *  * keys to help break ties.
  *
  * <p><strong>Note that this implementation is not synchronized.</strong>
  * If multiple threads access a hash map concurrently, and at least one of
