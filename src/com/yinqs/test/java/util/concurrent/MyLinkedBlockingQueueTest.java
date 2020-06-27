@@ -1,5 +1,9 @@
 package com.yinqs.test.java.util.concurrent;
 
+
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -14,7 +18,6 @@ public class MyLinkedBlockingQueueTest {
 
         new Consumer1(blockingQueue,"consumer1").start();
 
-        new Consumer1(blockingQueue,"consumer2").start();
 
         new Provider1(blockingQueue).start();
 
