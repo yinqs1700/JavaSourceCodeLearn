@@ -546,7 +546,8 @@ public class HashMap<K, V> extends AbstractMap<K, V>
      * @throws IllegalArgumentException if the initial capacity is negative
      *                                  or the load factor is nonpositive
      */
-    public HashMap(int initialCapacity, float loadFactor) {
+    public HashMap(int initialCapacity, float loadFactor)  {
+        System.out.println(initialCapacity);
         if (initialCapacity < 0)
             throw new IllegalArgumentException("Illegal initial capacity: " +
                     initialCapacity);
@@ -799,6 +800,7 @@ public class HashMap<K, V> extends AbstractMap<K, V>
      * @return the table
      */
     final Node<K, V>[] resize() {
+        System.out.println("---resize---");
         Node<K, V>[] oldTab = table;
         int oldCap = (oldTab == null) ? 0 : oldTab.length;
         // capacity * load factor

@@ -41,6 +41,9 @@ import java.util.Date;
 import sun.misc.Unsafe;
 
 /**
+ * 通过先进先出的等待队列，提供了一个实现阻塞锁和一些同步器的框架的框架。
+ * 这个依赖一个原子性的int值来代表状态，子类必须实现protected方法来改变这个
+ * 状态，状态根据这个对象的是否获得锁或者释放锁来定义。
  * Provides a framework for implementing blocking locks and related
  * synchronizers (semaphores, events, etc) that rely on
  * first-in-first-out (FIFO) wait queues.  This class is designed to
@@ -54,7 +57,7 @@ import sun.misc.Unsafe;
  * value manipulated using methods {@link #getState}, {@link
  * #setState} and {@link #compareAndSetState} is tracked with respect
  * to synchronization.
- *
+ * 子类应该实现一个非公共的内部类来实现类同步属性
  * <p>Subclasses should be defined as non-public internal helper
  * classes that are used to implement the synchronization properties
  * of their enclosing class.  Class
@@ -63,7 +66,8 @@ import sun.misc.Unsafe;
  * {@link #acquireInterruptibly} that can be invoked as
  * appropriate by concrete locks and related synchronizers to
  * implement their public methods.
- *
+ * 这个类支持排他性和共享性的模式，共享性表示一个线程如果获得该共享资源，如果还有
+ * 其他的线程尝试获得这个锁，那么也能够得到这个锁；
  * <p>This class supports either or both a default <em>exclusive</em>
  * mode and a <em>shared</em> mode. When acquired in exclusive mode,
  * attempted acquires by other threads cannot succeed. Shared mode
@@ -77,6 +81,10 @@ import sun.misc.Unsafe;
  * {@link ReadWriteLock}. Subclasses that support only exclusive or
  * only shared modes need not define the methods supporting the unused mode.
  *
+ * 这个类嵌套了一个ConditionObject类，能够通过使用一个Condition对象帮助子类
+ * 支持排他性，其中isHeldExclusively方法表示相对于当前线程来说这个同步性是否
+ * 是排他的，release方法调用当前state来完全的释放这个对象，acquire保存状态值
+ * 最终回复这个对象的state到之前获取到的状态
  * <p>This class defines a nested {@link ConditionObject} class that
  * can be used as a {@link Condition} implementation by subclasses
  * supporting exclusive mode for which method {@link
@@ -103,7 +111,7 @@ import sun.misc.Unsafe;
  * initial state upon deserialization.
  *
  * <h3>Usage</h3>
- *
+ *  使用本类实现一个一个同步器，必须重写重写下面几种方法
  * <p>To use this class as the basis of a synchronizer, redefine the
  * following methods, as applicable, by inspecting and/or modifying
  * the synchronization state using {@link #getState}, {@link
@@ -159,14 +167,18 @@ import sun.misc.Unsafe;
  * specifically designed to be used by fair synchronizers) returns
  * {@code true}.  Other variations are possible.
  *
+ *  线程的默认插入策略通常来说吞吐量和可伸缩性最高的，虽然不保证公平性和避免饥饿
+ *  被之后的线程插队等
  * <p>Throughput and scalability are generally highest for the
  * default barging (also known as <em>greedy</em>,
  * <em>renouncement</em>, and <em>convoy-avoidance</em>) strategy.
  * While this is not guaranteed to be fair or starvation-free, earlier
  * queued threads are allowed to recontend before later queued
  * threads, and each recontention has an unbiased chance to succeed
- * against incoming threads.  Also, while acquires do not
- * &quot;spin&quot; in the usual sense, they may perform multiple
+ * against incoming threads.
+ *
+ * Also, while acquires do not &quot;spin&quot; in the usual sense,
+ * they may perform multiple
  * invocations of {@code tryAcquire} interspersed with other
  * computations before blocking.  This gives most of the benefits of
  * spins when exclusive synchronization is only briefly held, without
@@ -300,15 +312,18 @@ public abstract class AbstractQueuedSynchronizer
 
     /**
      * Wait queue node class.
+     * 等待队列时CLH自旋锁队列的变种
      *
      * <p>The wait queue is a variant of a "CLH" (Craig, Landin, and
      * Hagersten) lock queue. CLH locks are normally used for
      * spinlocks.  We instead use them for blocking synchronizers, but
      * use the same basic tactic of holding some of the control
-     * information about a thread in the predecessor of its node.  A
+     * information about a thread in the predecessor of its node.A
      * "status" field in each node keeps track of whether a thread
      * should block.  A node is signalled when its predecessor
-     * releases.  Each node of the queue otherwise serves as a
+     * releases.
+     *
+     * Each node of the queue otherwise serves as a
      * specific-notification-style monitor holding a single waiting
      * thread. The status field does NOT control whether threads are
      * granted locks etc though.  A thread may try to acquire if it is
@@ -331,7 +346,8 @@ public abstract class AbstractQueuedSynchronizer
      * more work for nodes to determine who their successors are,
      * in part to deal with possible cancellation due to timeouts
      * and interrupts.
-     *
+     * prev链主要需要处理取消，如果一个节点取消了，他的后继节点则会重新连接到
+     * 之前的没有取消的前驱上面
      * <p>The "prev" links (not used in original CLH locks), are mainly
      * needed to handle cancellation. If a node is cancelled, its
      * successor is (normally) relinked to a non-cancelled
@@ -424,7 +440,7 @@ public abstract class AbstractQueuedSynchronizer
          * Non-negative values mean that a node doesn't need to
          * signal. So, most code doesn't need to check for particular
          * values, just for sign.
-         *
+         * 通过节点的状态来判断处于阻塞，还是取消，等等
          * The field is initialized to 0 for normal sync nodes, and
          * CONDITION for condition nodes.  It is modified using CAS
          * (or when possible, unconditional volatile writes).
@@ -514,6 +530,7 @@ public abstract class AbstractQueuedSynchronizer
     }
 
     /**
+     * 头节点，懒加载，通过setHead初始化，如果存在，不能是CANCELLED状态
      * Head of the wait queue, lazily initialized.  Except for
      * initialization, it is modified only via method setHead.  Note:
      * If head exists, its waitStatus is guaranteed not to be
@@ -528,6 +545,7 @@ public abstract class AbstractQueuedSynchronizer
     private transient volatile Node tail;
 
     /**
+     * 同步状态
      * The synchronization state.
      */
     private volatile int state;
@@ -569,6 +587,7 @@ public abstract class AbstractQueuedSynchronizer
     // Queuing utilities
 
     /**
+     * 自旋时间阈值
      * The number of nanoseconds for which it is faster to spin
      * rather than to use timed park. A rough estimate suffices
      * to improve responsiveness with very short timeouts.
@@ -597,6 +616,7 @@ public abstract class AbstractQueuedSynchronizer
     }
 
     /**
+     * 添加waiter，向队列中加入当前线程节点入队
      * Creates and enqueues node for current thread and given mode.
      *
      * @param mode Node.EXCLUSIVE for exclusive, Node.SHARED for shared
@@ -632,7 +652,7 @@ public abstract class AbstractQueuedSynchronizer
 
     /**
      * Wakes up node's successor, if one exists.
-     *
+     * 唤醒当前节点的next节点
      * @param node the node
      */
     private void unparkSuccessor(Node node) {
@@ -847,6 +867,7 @@ public abstract class AbstractQueuedSynchronizer
      */
 
     /**
+     * 排他非中断模式
      * Acquires in exclusive uninterruptible mode for thread already in
      * queue. Used by condition wait methods as well as acquire.
      *
