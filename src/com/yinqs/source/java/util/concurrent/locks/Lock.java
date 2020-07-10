@@ -37,12 +37,16 @@ package java.util.concurrent.locks;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 提供了比synchronized方法或代码块更过的操作，允许更加灵活的结构。
  * {@code Lock} implementations provide more extensive locking
  * operations than can be obtained using {@code synchronized} methods
  * and statements.  They allow more flexible structuring, may have
  * quite different properties, and may support multiple associated
  * {@link Condition} objects.
  *
+ * lock是能够控制多个线程对共享资源的访问。通常来说，lock对一个共享资源提供互斥访问
+ * 只有一个获得锁的线程能够访问共享资源。但是有一些锁，比如ReadWriteLock能够允许
+ * 对共享资源的并发访问。
  * <p>A lock is a tool for controlling access to a shared resource by
  * multiple threads. Commonly, a lock provides exclusive access to a
  * shared resource: only one thread at a time can acquire the lock and
@@ -50,12 +54,15 @@ import java.util.concurrent.TimeUnit;
  * acquired first. However, some locks may allow concurrent access to
  * a shared resource, such as the read lock of a {@link ReadWriteLock}.
  *
+ *
  * <p>The use of {@code synchronized} methods or statements provides
  * access to the implicit monitor lock associated with every object, but
  * forces all lock acquisition and release to occur in a block-structured way:
+ * 获得锁之后就要释放锁，锁的释放必须在与获得锁必须在一个相同的词汇范围
  * when multiple locks are acquired they must be released in the opposite
  * order, and all locks must be released in the same lexical scope in which
  * they were acquired.
+ *
  *
  * <p>While the scoping mechanism for {@code synchronized} methods
  * and statements makes it much easier to program with monitor locks,
@@ -65,11 +72,15 @@ import java.util.concurrent.TimeUnit;
  * concurrently accessed data structures require the use of
  * &quot;hand-over-hand&quot; or &quot;chain locking&quot;: you
  * acquire the lock of node A, then node B, then release A and acquire
- * C, then release B and acquire D and so on.  Implementations of the
+ * C, then release B and acquire D and so on.
+ * 实现锁接口的类能够使用这种技术允许一个锁在不同范围获取和释放，并且允许多个锁
+ * 按照不同的顺序进行获取和释放
+ * Implementations of the
  * {@code Lock} interface enable the use of such techniques by
  * allowing a lock to be acquired and released in different scopes,
  * and allowing multiple locks to be acquired and released in any
  * order.
+ *
  *
  * <p>With this increased flexibility comes additional
  * responsibility. The absence of block-structured locking removes the
@@ -98,6 +109,7 @@ import java.util.concurrent.TimeUnit;
  * interrupted ({@link #lockInterruptibly}, and an attempt to acquire
  * the lock that can timeout ({@link #tryLock(long, TimeUnit)}).
  *
+ * 一个lock类可以提供与monitor lock完全不同行为和语义
  * <p>A {@code Lock} class can also provide behavior and semantics
  * that is quite different from that of the implicit monitor lock,
  * such as guaranteed ordering, non-reentrant usage, or deadlock
@@ -107,6 +119,7 @@ import java.util.concurrent.TimeUnit;
  * <p>Note that {@code Lock} instances are just normal objects and can
  * themselves be used as the target in a {@code synchronized} statement.
  * Acquiring the
+ * monitor lock实例与lock实例没有特别的关系，应该不要将两种lock混用
  * monitor lock of a {@code Lock} instance has no specified relationship
  * with invoking any of the {@link #lock} methods of that instance.
  * It is recommended that to avoid confusion you never use {@code Lock}
@@ -129,6 +142,7 @@ import java.util.concurrent.TimeUnit;
  * <li>A successful {@code unlock} operation has the same
  * memory synchronization effects as a successful <em>Unlock</em> action.
  * </ul>
+ *
  *
  * Unsuccessful locking and unlocking operations, and reentrant
  * locking/unlocking operations, do not require any memory

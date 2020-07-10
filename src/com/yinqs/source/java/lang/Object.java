@@ -248,12 +248,15 @@ public class Object {
     }
 
     /**
+     * 唤醒一个在等待当前对象monitor的线程，在实现上这个唤醒的选择是任意的，
+     * 一个线程等待monitor是通过调用wait方法来实现的。
      * Wakes up a single thread that is waiting on this object's
      * monitor. If any threads are waiting on this object, one of them
      * is chosen to be awakened. The choice is arbitrary and occurs at
      * the discretion of the implementation. A thread waits on an object's
      * monitor by calling one of the {@code wait} methods.
      * <p>
+     * 被唤醒的线程直到当前线程放弃这个对象的锁时就不能执行了。
      * The awakened thread will not be able to proceed until the current
      * thread relinquishes the lock on this object. The awakened thread will
      * compete in the usual manner with any other threads that might be
@@ -261,6 +264,9 @@ public class Object {
      * awakened thread enjoys no reliable privilege or disadvantage in being
      * the next thread to lock this object.
      * <p>
+     * 这个方法只能被拥有该对象monitor的线程调用，一个线程成为这个对象的monitor拥有
+     * 这有三个方式，synchronized方法，synchronized代码块，对应class
+     * 的synchronized静态方法
      * This method should only be called by a thread that is the owner
      * of this object's monitor. A thread becomes the owner of the
      * object's monitor in one of three ways:
@@ -472,12 +478,17 @@ public class Object {
     }
 
     /**
+     * wait导致当前线程等待只带其他线程调用notify或notifyAll后。
      * Causes the current thread to wait until another thread invokes the
      * {@link java.lang.Object#notify()} method or the
      * {@link java.lang.Object#notifyAll()} method for this object.
      * In other words, this method behaves exactly as if it simply
      * performs the call {@code wait(0)}.
      * <p>
+     *
+     * 调用wait方法必须有当前对象的monitor对象（持有锁），当前线程释放自身对这个monitor
+     * 的所有权，并等待其他线程等待这个对象的monitor被唤醒之后爱通过调用notify或
+     * notifyAll方法之后，当前线程等到他能够重新获得这个monitor的所有权之后再重新执行
      * The current thread must own this object's monitor. The thread
      * releases ownership of this monitor and waits until another thread
      * notifies threads waiting on this object's monitor to wake up

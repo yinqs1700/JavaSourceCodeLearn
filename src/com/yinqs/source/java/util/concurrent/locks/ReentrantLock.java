@@ -38,11 +38,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.Collection;
 
 /**
+ * ReentrantLock 与 monitor lock访问共享资源的行为和语义类似，但是增加了
+ * 更多的功能
  * A reentrant mutual exclusion {@link Lock} with the same basic
  * behavior and semantics as the implicit monitor lock accessed using
  * {@code synchronized} methods and statements, but with extended
  * capabilities.
  *
+ * ReentrantLock属于最后一个申请锁成功还没有解锁的的线程。
  * <p>A {@code ReentrantLock} is <em>owned</em> by the thread last
  * successfully locking, but not yet unlocking it. A thread invoking
  * {@code lock} will return, successfully acquiring the lock, when
