@@ -37,8 +37,10 @@ package java.util.concurrent;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
 /**
+ * 一个同步辅助器，能够让一个或多个线程等待其他线程的一系列操作执行完毕。
  * A synchronization aid that allows one or more threads to wait until
  * a set of operations being performed in other threads completes.
+ *
  *
  * <p>A {@code CountDownLatch} is initialized with a given <em>count</em>.
  * The {@link #await await} methods block until the current count reaches
@@ -176,10 +178,12 @@ public class CountDownLatch {
         protected boolean tryReleaseShared(int releases) {
             // Decrement count; signal when transition to zero
             for (;;) {
+                // 得到计数器值
                 int c = getState();
                 if (c == 0)
                     return false;
                 int nextc = c-1;
+                // CAS更新值
                 if (compareAndSetState(c, nextc))
                     return nextc == 0;
             }
@@ -201,6 +205,7 @@ public class CountDownLatch {
     }
 
     /**
+     * 会一直是当前线程等待直到countdown计数器变为0
      * Causes the current thread to wait until the latch has counted down to
      * zero, unless the thread is {@linkplain Thread#interrupt interrupted}.
      *
@@ -232,6 +237,8 @@ public class CountDownLatch {
     }
 
     /**
+     * 为线程等待提供一个超时时间，这样即使其他线程操作没有执行完毕，或者使用错误等，不会
+     * 导致线程一直等待
      * Causes the current thread to wait until the latch has counted down to
      * zero, unless the thread is {@linkplain Thread#interrupt interrupted},
      * or the specified waiting time elapses.

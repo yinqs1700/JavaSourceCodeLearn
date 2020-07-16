@@ -39,6 +39,7 @@ import java.util.function.IntBinaryOperator;
 import sun.misc.Unsafe;
 
 /**
+ * 原子类型的integer
  * An {@code int} value that may be updated atomically.  See the
  * {@link java.util.concurrent.atomic} package specification for
  * description of the properties of atomic variables. An
@@ -64,6 +65,7 @@ public class AtomicInteger extends Number implements java.io.Serializable {
                 (AtomicInteger.class.getDeclaredField("value"));
         } catch (Exception ex) { throw new Error(ex); }
     }
+
 
     private volatile int value;
 

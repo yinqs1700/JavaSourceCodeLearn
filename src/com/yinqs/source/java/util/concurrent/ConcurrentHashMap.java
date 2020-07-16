@@ -73,24 +73,35 @@ import java.util.function.ToLongFunction;
 import java.util.stream.Stream;
 
 /**
+ * 支持并发检索和并发修改的hash table
  * A hash table supporting full concurrency of retrievals and
  * high expected concurrency for updates. This class obeys the
  * same functional specification as {@link java.util.Hashtable}, and
  * includes versions of methods corresponding to each method of
- * {@code Hashtable}. However, even though all operations are
+ * {@code Hashtable}.
+ * 与hashtable中的方法相似，但是所有操作都是线程安全的，检索操作不会引发锁，
+ * 也不想hashTable那样直接锁整个表禁止所有访问。
+ * However, even though all operations are
  * thread-safe, retrieval operations do <em>not</em> entail locking,
  * and there is <em>not</em> any support for locking the entire table
  * in a way that prevents all access.  This class is fully
  * interoperable with {@code Hashtable} in programs that rely on its
  * thread safety but not on its synchronization details.
  *
+ * 由于检索操作（get）不会发生阻塞，所有会与更新操作比如put和remove操作发生重叠。
+ *
  * <p>Retrieval operations (including {@code get}) generally do not
  * block, so may overlap with update operations (including {@code put}
- * and {@code remove}). Retrievals reflect the results of the most
+ * and {@code remove}).
+ * 检索反应了自发生以来最近完成更新操作的结果（正式的说，对一个key的更新操作发生在
+ * 检索操作之前，是一个happens-before的关系）。
+ * Retrievals reflect the results of the most
  * recently <em>completed</em> update operations holding upon their
  * onset. (More formally, an update operation for a given key bears a
  * <em>happens-before</em> relation with any (non-null) retrieval for
- * that key reporting the updated value.)  For aggregate operations
+ * that key reporting the updated value.)
+ * 对聚合操作比如putAll和clear这些操作可能反映在插入和删除一些节点上。
+ * For aggregate operations
  * such as {@code putAll} and {@code clear}, concurrent retrievals may
  * reflect insertion or removal of only some entries.  Similarly,
  * Iterators, Spliterators and Enumerations return elements reflecting the
@@ -133,12 +144,14 @@ import java.util.stream.Stream;
  * mapped values are (perhaps transiently) not used or all take the
  * same mapping value.
  *
+ *
  * <p>A ConcurrentHashMap can be used as scalable frequency map (a
  * form of histogram or multiset) by using {@link
  * java.util.concurrent.atomic.LongAdder} values and initializing via
  * {@link #computeIfAbsent computeIfAbsent}. For example, to add a count
  * to a {@code ConcurrentHashMap<String,LongAdder> freqs}, you can use
  * {@code freqs.computeIfAbsent(k -> new LongAdder()).increment();}
+ *
  *
  * <p>This class and its views and iterators implement all of the
  * <em>optional</em> methods of the {@link Map} and {@link Iterator}
@@ -147,10 +160,13 @@ import java.util.stream.Stream;
  * <p>Like {@link Hashtable} but unlike {@link HashMap}, this class
  * does <em>not</em> allow {@code null} to be used as a key or value.
  *
+ * ConcurrentHashMaps支持一系列的串行和并行块操作。
  * <p>ConcurrentHashMaps support a set of sequential and parallel bulk
  * operations that, unlike most {@link Stream} methods, are designed
  * to be safely, and often sensibly, applied even with maps that are
- * being concurrently updated by other threads; for example, when
+ * being concurrently updated by other threads;
+ *
+ * for example, when
  * computing a snapshot summary of the values in a shared registry.
  * There are three kinds of operation, each with four forms, accepting
  * functions with Keys, Values, Entries, and (Key, Value) arguments
@@ -271,6 +287,10 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     /*
      * Overview:
      *
+     * 设计思路：
+     *  1.保持并发读，并减小并发更新操作，
+     *  2.保证空间消耗与HashMap相同或者更优，并且支持多个线程对空表的高效初
+     *    始化插入。
      * The primary design goal of this hash table is to maintain
      * concurrent readability (typically method get(), but also
      * iterators and related methods) while minimizing update
@@ -307,16 +327,24 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * constraints.  Nodes with negative hash fields are specially
      * handled or ignored in map methods.
      *
+     * 空桶插入第一个节点的时候通过CAS操作。
      * Insertion (via put or its variants) of the first node in an
      * empty bin is performed by just CASing it to the bin.  This is
      * by far the most common case for put operations under most
-     * key/hash distributions.  Other update operations (insert,
+     * key/hash distributions.
+     * 其他更操作需要锁，不想要浪费空间所有不用不同的对象来锁不同的桶，所有使用
+     * 这个bin的第一个节点作为这个bin自身的锁。
+     * Other update operations (insert,
      * delete, and replace) require locks.  We do not want to waste
      * the space required to associate a distinct lock object with
      * each bin, so instead use the first node of a bin list itself as
      * a lock. Locking support for these locks relies on builtin
      * "synchronized" monitors.
      *
+     * 对于一个list使用第一个节点作为锁对他来说是不够的，当一个一点被锁住了，
+     * 任何更新操作第一步必须验证他仍然是第一个节点，如果不是就重试。因为新节点
+     * 总是尾插到list后面，只要节点是bin的第一个节点，它就一直是，除非被删除了或者
+     * 由于resizing之后无效了。
      * Using the first node of a list as a lock does not by itself
      * suffice though: When a node is locked, any update must first
      * validate that it is still the first node after locking it, and
@@ -2504,6 +2532,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     /**
      * A padded cell for distributing counts.  Adapted from LongAdder
      * and Striped64.  See their internal docs for explanation.
+     * 避免伪共享
      */
     @sun.misc.Contended static final class CounterCell {
         volatile long value;

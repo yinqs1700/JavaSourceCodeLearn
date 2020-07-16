@@ -38,6 +38,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
+ * 一个同步辅助器，一系列线程所有的线程都在等到彼此到达一个公共的屏障点，才能继续执行
  * A synchronization aid that allows a set of threads to all wait for
  * each other to reach a common barrier point.  CyclicBarriers are
  * useful in programs involving a fixed sized party of threads that
@@ -138,6 +139,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class CyclicBarrier {
     /**
+     * 每一个屏障表示为一代实例，当屏障冲破或者重置的时候generation会改变。
      * Each use of the barrier is represented as a generation instance.
      * The generation changes whenever the barrier is tripped, or
      * is reset. There can be many generations associated with threads
@@ -164,6 +166,7 @@ public class CyclicBarrier {
     private Generation generation = new Generation();
 
     /**
+     * 处于等待方的线程数，冲破屏障之后重置count为parties
      * Number of parties still waiting. Counts down from parties to 0
      * on each generation.  It is reset to parties on each new
      * generation or when broken.
@@ -176,8 +179,10 @@ public class CyclicBarrier {
      */
     private void nextGeneration() {
         // signal completion of last generation
+        // 通过condition唤醒所有等待状态下的线程
         trip.signalAll();
         // set up next generation
+        // 重置count
         count = parties;
         generation = new Generation();
     }
@@ -203,22 +208,26 @@ public class CyclicBarrier {
         try {
             final Generation g = generation;
 
+            // 这一代被破坏了抛异常
             if (g.broken)
                 throw new BrokenBarrierException();
 
+            // 中断抛异常
             if (Thread.interrupted()) {
                 breakBarrier();
                 throw new InterruptedException();
             }
 
+            // 减count
             int index = --count;
-            if (index == 0) {  // tripped
+            if (index == 0) {  // tripped 线程到达barrier
                 boolean ranAction = false;
                 try {
                     final Runnable command = barrierCommand;
-                    if (command != null)
+                    if (command != null)// 执行构造方法传入的可选操作
                         command.run();
                     ranAction = true;
+                    // 开启下一分代
                     nextGeneration();
                     return 0;
                 } finally {
@@ -231,6 +240,7 @@ public class CyclicBarrier {
             for (;;) {
                 try {
                     if (!timed)
+                        // 没设超时时间，condition trip等到唤醒
                         trip.await();
                     else if (nanos > 0L)
                         nanos = trip.awaitNanos(nanos);
@@ -276,12 +286,16 @@ public class CyclicBarrier {
      */
     public CyclicBarrier(int parties, Runnable barrierAction) {
         if (parties <= 0) throw new IllegalArgumentException();
+        // 参与线程数
         this.parties = parties;
+        // 初始化count为parties
         this.count = parties;
+        // 冲破屏障之前执行的方法
         this.barrierCommand = barrierAction;
     }
 
     /**
+     *
      * Creates a new {@code CyclicBarrier} that will trip when the
      * given number of parties (threads) are waiting upon it, and
      * does not perform a predefined action when the barrier is tripped.
@@ -304,12 +318,16 @@ public class CyclicBarrier {
     }
 
     /**
+     * 等待直到所有parties都调用了await方法
      * Waits until all {@linkplain #getParties parties} have invoked
      * {@code await} on this barrier.
      *
+     * 如果当前线程不是最后一个到达的线程，它就会被禁止线程调度并被休眠，直到以下
+     * 条件发生：
      * <p>If the current thread is not the last to arrive then it is
      * disabled for thread scheduling purposes and lies dormant until
      * one of the following things happens:
+     * 最后一个线程到达
      * <ul>
      * <li>The last thread arrives; or
      * <li>Some other thread {@linkplain Thread#interrupt interrupts}
