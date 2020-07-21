@@ -231,9 +231,10 @@ public class ReentrantReadWriteLock
     }
 
     /**
+     * 默认非公平锁
      * Creates a new {@code ReentrantReadWriteLock} with
      * the given fairness policy.
-     *
+     * 将sync对象赋值给ReadLock和WriteLock
      * @param fair {@code true} if this lock should use a fair ordering policy
      */
     public ReentrantReadWriteLock(boolean fair) {
@@ -380,6 +381,7 @@ public class ReentrantReadWriteLock
         protected final boolean tryAcquire(int acquires) {
             /*
              * Walkthrough:
+             * 读锁非0或者写锁非0则失败
              * 1. If read count nonzero or write count nonzero
              *    and owner is a different thread, fail.
              * 2. If count would saturate, fail. (This can only
@@ -392,16 +394,18 @@ public class ReentrantReadWriteLock
             Thread current = Thread.currentThread();
             int c = getState();
             int w = exclusiveCount(c);
+            // 排它锁被线程持有
             if (c != 0) {
                 // (Note: if c != 0 and w == 0 then shared count != 0)
                 if (w == 0 || current != getExclusiveOwnerThread())
                     return false;
                 if (w + exclusiveCount(acquires) > MAX_COUNT)
                     throw new Error("Maximum lock count exceeded");
-                // Reentrant acquire
+                // Reentrant acquire 可重入的获取
                 setState(c + acquires);
                 return true;
             }
+            // 尝试上写锁
             if (writerShouldBlock() ||
                 !compareAndSetState(c, c + acquires))
                 return false;
@@ -445,9 +449,11 @@ public class ReentrantReadWriteLock
                 "attempt to unlock read lock, not locked by current thread");
         }
 
+        // 获取共享锁
         protected final int tryAcquireShared(int unused) {
             /*
              * Walkthrough:
+             * 如果有其他线程上了写锁，失败
              * 1. If write lock held by another thread, fail.
              * 2. Otherwise, this thread is eligible for
              *    lock wrt state, so ask if it should block
@@ -462,14 +468,20 @@ public class ReentrantReadWriteLock
              *    saturated, chain to version with full retry loop.
              */
             Thread current = Thread.currentThread();
+            // 得到state
             int c = getState();
+            // exclusiveCount 低16为的数量，获取排它锁的数量
             if (exclusiveCount(c) != 0 &&
                 getExclusiveOwnerThread() != current)
+                // 获取锁失败
                 return -1;
+            // 获得读锁数量
             int r = sharedCount(c);
+            // readerShouldBlock公平锁相关
             if (!readerShouldBlock() &&
                 r < MAX_COUNT &&
                 compareAndSetState(c, c + SHARED_UNIT)) {
+                // 读锁数量
                 if (r == 0) {
                     firstReader = current;
                     firstReaderHoldCount = 1;
@@ -489,6 +501,7 @@ public class ReentrantReadWriteLock
         }
 
         /**
+         * 获取读锁的完全版本，处理CAS没有完成的工作
          * Full version of acquire for reads, that handles CAS misses
          * and reentrant reads not dealt with in tryAcquireShared.
          */
@@ -714,6 +727,7 @@ public class ReentrantReadWriteLock
         }
 
         /**
+         * 获取到一个共享的锁
          * Acquires the read lock.
          *
          * <p>Acquires the read lock if the write lock is not held by

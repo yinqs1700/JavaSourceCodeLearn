@@ -42,6 +42,7 @@ import java.util.function.BiFunction;
 import java.util.concurrent.Executor;
 
 /**
+ * 一个可能的异步计算阶段，将异步计算分为多个阶段
  * A stage of a possibly asynchronous computation, that performs an
  * action or computes a value when another CompletionStage completes.
  * A stage completes upon termination of its computation, but this may

@@ -41,7 +41,7 @@ import java.util.Date;
 import sun.misc.Unsafe;
 
 /**
- * 通过先进先出的等待队列，提供了一个实现阻塞锁和一些同步器的框架的框架。
+ * 通过先进先出的等待队列，提供了一个实现阻塞锁和一些同步器的框架。
  * 这个依赖一个原子性的int值来代表状态，子类必须实现protected方法来改变这个
  * 状态，状态根据这个对象的是否获得锁或者释放锁来定义。
  * Provides a framework for implementing blocking locks and related
@@ -52,7 +52,9 @@ import sun.misc.Unsafe;
  * must define the protected methods that change this state, and which
  * define what that state means in terms of this object being acquired
  * or released.  Given these, the other methods in this class carry
- * out all queuing and blocking mechanics. Subclasses can maintain
+ * out all queuing and blocking mechanics.
+ *
+ * Subclasses can maintain
  * other state fields, but only the atomically updated {@code int}
  * value manipulated using methods {@link #getState}, {@link
  * #setState} and {@link #compareAndSetState} is tracked with respect

@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 /**
+ * 提供线程本地变量，通过set和get方法获取到的是当前线程中保存的变量。
  * This class provides thread-local variables.  These variables differ from
  * their normal counterparts in that each thread that accesses one (via its
  * {@code get} or {@code set} method) has its own, independently initialized
@@ -49,6 +50,7 @@ import java.util.function.Supplier;
  *     private static final AtomicInteger nextId = new AtomicInteger(0);
  *
  *     // Thread local variable containing each thread's ID
+ *     // 采用static，可确保当前类所有实例可以访问该对象
  *     private static final ThreadLocal&lt;Integer&gt; threadId =
  *         new ThreadLocal&lt;Integer&gt;() {
  *             &#64;Override protected Integer initialValue() {
@@ -149,6 +151,8 @@ public class ThreadLocal<T> {
     }
 
     /**
+     * 返回这个线程局部变量在当前线程中的副本。如果当前线程没有值，则会
+     * 调用initialValue来初始化。
      * Returns the value in the current thread's copy of this
      * thread-local variable.  If the variable has no value for the
      * current thread, it is first initialized to the value returned
@@ -197,9 +201,11 @@ public class ThreadLocal<T> {
      *        this thread-local.
      */
     public void set(T value) {
+        // 获取当前线程对象
         Thread t = Thread.currentThread();
         ThreadLocalMap map = getMap(t);
         if (map != null)
+            // 当前threadLocal作为key
             map.set(this, value);
         else
             createMap(t, value);
@@ -223,6 +229,7 @@ public class ThreadLocal<T> {
      }
 
     /**
+     * 返回线程t的成员变量threadLocals
      * Get the map associated with a ThreadLocal. Overridden in
      * InheritableThreadLocal.
      *
@@ -298,6 +305,7 @@ public class ThreadLocal<T> {
     static class ThreadLocalMap {
 
         /**
+         * 本质上是防止内存泄露
          * The entries in this hash map extend WeakReference, using
          * its main ref field as the key (which is always a
          * ThreadLocal object).  Note that null keys (i.e. entry.get()
@@ -473,6 +481,7 @@ public class ThreadLocal<T> {
                 }
 
                 if (k == null) {
+                    // 替换key为空的entry
                     replaceStaleEntry(key, value, i);
                     return;
                 }
@@ -485,6 +494,7 @@ public class ThreadLocal<T> {
         }
 
         /**
+         * 删除指定key对应的entry
          * Remove the entry for key.
          */
         private void remove(ThreadLocal<?> key) {
@@ -555,6 +565,7 @@ public class ThreadLocal<T> {
                     // Start expunge at preceding stale entry if it exists
                     if (slotToExpunge == staleSlot)
                         slotToExpunge = i;
+                    // 清除空的entry
                     cleanSomeSlots(expungeStaleEntry(slotToExpunge), len);
                     return;
                 }

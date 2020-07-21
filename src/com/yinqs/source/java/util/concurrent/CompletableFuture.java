@@ -53,6 +53,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.locks.LockSupport;
 
 /**
+ * 可以显示的完成计算，并且通过CompletionStage来支持不同阶段的计算。
  * A {@link Future} that may be explicitly completed (setting its
  * value and status), and may be used as a {@link CompletionStage},
  * supporting dependent functions and actions that trigger upon its
