@@ -45,10 +45,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.*;
 
 /**
+ * 一个ExecutorService能够执行每个提交的任务，通过使用几种可能的池化线程的方
+ * 法，通常使用Executor的工厂方法。
  * An {@link ExecutorService} that executes each submitted task using
  * one of possibly several pooled threads, normally configured
  * using {@link Executors} factory methods.
  *
+ * 线程池主要解决两个不同的问题：在执行大批量的异步任务的时候，能够提高性能，
+ * 是由于较少了每个任务的调用开销，并且它们提供了一些边界处理和管理资源的手段，
+ * 包括执行一些任务的消耗，每个线程池还包含了一些基本的统计，比如执行完成的
+ * 任务数。
  * <p>Thread pools address two different problems: they usually
  * provide improved performance when executing large numbers of
  * asynchronous tasks, due to reduced per-task invocation overhead,
@@ -57,6 +63,8 @@ import java.util.*;
  * Each {@code ThreadPoolExecutor} also maintains some basic
  * statistics, such as the number of completed tasks.
  *
+ * 为了能够在不同环境下应用得跟家广泛，这个类提供了许多可调整的参数和可扩展
+ * 的钩子方法。但是程序员应该去使用Executors的工厂方法来更方便的使用线程池
  * <p>To be useful across a wide range of contexts, this class
  * provides many adjustable parameters and extensibility
  * hooks. However, programmers are urged to use the more convenient
@@ -378,6 +386,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * that workerCount is 0 (which sometimes entails a recheck -- see
      * below).
      */
+    // 线程池  状态3位，线程数量29位
     private final AtomicInteger ctl = new AtomicInteger(ctlOf(RUNNING, 0));
     private static final int COUNT_BITS = Integer.SIZE - 3;
     private static final int CAPACITY   = (1 << COUNT_BITS) - 1;
@@ -1277,21 +1286,21 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * Creates a new {@code ThreadPoolExecutor} with the given initial
      * parameters.
      *
-     * @param corePoolSize the number of threads to keep in the pool, even
+     * @param corePoolSize the number of threads to keep in the pool, even 线程池中保持的数量
      *        if they are idle, unless {@code allowCoreThreadTimeOut} is set
-     * @param maximumPoolSize the maximum number of threads to allow in the
+     * @param maximumPoolSize the maximum number of threads to allow in the 线程池中索运行的线程数量
      *        pool
      * @param keepAliveTime when the number of threads is greater than
-     *        the core, this is the maximum time that excess idle threads
+     *        the core, this is the maximum time that excess idle threads 当线程数量超过了corePoolSize，并超过了指定时间，多出的线程会被回收
      *        will wait for new tasks before terminating.
-     * @param unit the time unit for the {@code keepAliveTime} argument
+     * @param unit the time unit for the {@code keepAliveTime} argument 时间单位
      * @param workQueue the queue to use for holding tasks before they are
-     *        executed.  This queue will hold only the {@code Runnable}
+     *        executed.  This queue will hold only the {@code Runnable} 本身是一个阻塞队列
      *        tasks submitted by the {@code execute} method.
      * @param threadFactory the factory to use when the executor
-     *        creates a new thread
+     *        creates a new thread 创建线程的线程工厂
      * @param handler the handler to use when execution is blocked
-     *        because the thread bounds and queue capacities are reached
+     *        because the thread bounds and queue capacities are reached 当线程达到了阻塞队列容量边界之后处理操作。
      * @throws IllegalArgumentException if one of the following holds:<br>
      *         {@code corePoolSize < 0}<br>
      *         {@code keepAliveTime < 0}<br>

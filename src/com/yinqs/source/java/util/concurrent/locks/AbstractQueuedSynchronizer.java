@@ -685,6 +685,7 @@ public abstract class AbstractQueuedSynchronizer
     }
 
     /**
+     * 共享模式的释放动作，唤醒后继的线程，并且保证传播
      * Release action for shared mode -- signals successor and ensures
      * propagation. (Note: For exclusive mode, release just amounts
      * to calling unparkSuccessor of head if it needs signal.)
@@ -703,8 +704,11 @@ public abstract class AbstractQueuedSynchronizer
          */
         for (;;) {
             Node h = head;
+            // 队列非空
             if (h != null && h != tail) {
+                // 获取等待状态
                 int ws = h.waitStatus;
+                // 状态为signal，唤醒后继线程
                 if (ws == Node.SIGNAL) {
                     if (!compareAndSetWaitStatus(h, Node.SIGNAL, 0))
                         continue;            // loop to recheck cases
@@ -1271,6 +1275,8 @@ public abstract class AbstractQueuedSynchronizer
     }
 
     /**
+     * 排他模式释放锁，实现用来解锁一个或更多线程如果tryRelease放回true，
+     * 可以用来实现Lock接口中的unlock方法
      * Releases in exclusive mode.  Implemented by unblocking one or
      * more threads if {@link #tryRelease} returns true.
      * This method can be used to implement method {@link Lock#unlock}.
@@ -1282,6 +1288,7 @@ public abstract class AbstractQueuedSynchronizer
      */
     public final boolean release(int arg) {
         if (tryRelease(arg)) {
+            // 释放锁成功，更改队列结构，唤醒后续线程
             Node h = head;
             if (h != null && h.waitStatus != 0)
                 unparkSuccessor(h);
@@ -1684,6 +1691,7 @@ public abstract class AbstractQueuedSynchronizer
     }
 
     /**
+     * 将一个node从条件队列移动到同步队列
      * Transfers a node from a condition queue onto sync queue.
      * Returns true if successful.
      * @param node the node
@@ -1698,6 +1706,7 @@ public abstract class AbstractQueuedSynchronizer
             return false;
 
         /*
+         * 拼接队列
          * Splice onto queue and try to set waitStatus of predecessor to
          * indicate that thread is (probably) waiting. If cancelled or
          * attempt to set waitStatus fails, wake up to resync (in which
@@ -1865,6 +1874,7 @@ public abstract class AbstractQueuedSynchronizer
         // Internal methods
 
         /**
+         * 向条件队列添加等待者
          * Adds a new waiter to wait queue.
          * @return its new wait node
          */
@@ -1950,6 +1960,8 @@ public abstract class AbstractQueuedSynchronizer
         // public methods
 
         /**
+         * 将等待时间最长的线程，如果存在，将这个条件的等待队里移到拥有锁的
+         * 等待队里
          * Moves the longest-waiting thread, if one exists, from the
          * wait queue for this condition to the wait queue for the
          * owning lock.
@@ -2055,7 +2067,9 @@ public abstract class AbstractQueuedSynchronizer
         public final void await() throws InterruptedException {
             if (Thread.interrupted())
                 throw new InterruptedException();
+            // 将节点加入到Condition等待队列
             Node node = addConditionWaiter();
+
             int savedState = fullyRelease(node);
             int interruptMode = 0;
             while (!isOnSyncQueue(node)) {

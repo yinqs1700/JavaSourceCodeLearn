@@ -36,6 +36,7 @@
 package java.util.concurrent;
 
 /**
+ * 使用线程工厂来移除了new Thread的硬编码
  * An object that creates new threads on demand.  Using thread factories
  * removes hardwiring of calls to {@link Thread#Thread(Runnable) new Thread},
  * enabling applications to use special thread subclasses, priorities, etc.

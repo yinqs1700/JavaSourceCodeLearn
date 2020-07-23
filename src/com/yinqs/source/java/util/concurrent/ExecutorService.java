@@ -38,10 +38,13 @@ import java.util.List;
 import java.util.Collection;
 
 /**
+ * 是一个Executor，提供一些方法来管理中止，产生一个Future来追踪一个或多个异步
+ * 任务的进度
  * An {@link Executor} that provides methods to manage termination and
  * methods that can produce a {@link Future} for tracking progress of
  * one or more asynchronous tasks.
  *
+ * ExecutorService能够被关闭，这样会导致它拒绝一些新任务。
  * <p>An {@code ExecutorService} can be shut down, which will cause
  * it to reject new tasks.  Two different methods are provided for
  * shutting down an {@code ExecutorService}. The {@link #shutdown}
@@ -211,6 +214,7 @@ public interface ExecutorService extends Executor {
         throws InterruptedException;
 
     /**
+     * 能够返回结果的任务执行方法
      * Submits a value-returning task for execution and returns a
      * Future representing the pending results of the task. The
      * Future's {@code get} method will return the task's result upon

@@ -271,6 +271,7 @@ public class ReentrantReadWriteLock
         static int exclusiveCount(int c) { return c & EXCLUSIVE_MASK; }
 
         /**
+         * 之前线程读锁保持计数器，底层使用ThreadLocal来实现
          * A counter for per-thread read hold counts.
          * Maintained as a ThreadLocal; cached in cachedHoldCounter
          */
@@ -361,7 +362,8 @@ public class ReentrantReadWriteLock
         abstract boolean writerShouldBlock();
 
         /*
-         * Note that tryRelease and tryAcquire can be called by
+         *注意tryRelease和tryAcquire能够被condition调用
+         *  Note that tryRelease and tryAcquire can be called by
          * Conditions. So it is possible that their arguments contain
          * both read and write holds that are all released during a
          * condition wait and re-established in tryAcquire.
@@ -369,10 +371,13 @@ public class ReentrantReadWriteLock
 
         protected final boolean tryRelease(int releases) {
             if (!isHeldExclusively())
+                // 线程比较，只有持有锁的线程能够调用
                 throw new IllegalMonitorStateException();
             int nextc = getState() - releases;
+            // 获取到排它锁的数量是否为0
             boolean free = exclusiveCount(nextc) == 0;
             if (free)
+                // 排它锁释放完毕，将Owner置位null
                 setExclusiveOwnerThread(null);
             setState(nextc);
             return free;
@@ -415,18 +420,22 @@ public class ReentrantReadWriteLock
 
         protected final boolean tryReleaseShared(int unused) {
             Thread current = Thread.currentThread();
+            // 当前线程有锁
             if (firstReader == current) {
                 // assert firstReaderHoldCount > 0;
+                // 如果count为1则此线程只获取了一次
                 if (firstReaderHoldCount == 1)
                     firstReader = null;
                 else
                     firstReaderHoldCount--;
             } else {
+                // 不是第一个读锁获取者
                 HoldCounter rh = cachedHoldCounter;
                 if (rh == null || rh.tid != getThreadId(current))
                     rh = readHolds.get();
                 int count = rh.count;
                 if (count <= 1) {
+                    // 清除ThreadLocalHoldCounter
                     readHolds.remove();
                     if (count <= 0)
                         throw unmatchedUnlockException();
@@ -437,6 +446,7 @@ public class ReentrantReadWriteLock
                 int c = getState();
                 int nextc = c - SHARED_UNIT;
                 if (compareAndSetState(c, nextc))
+                    // 如果读锁和写锁都没有线程持有，则释放读锁，让写锁能够获取锁
                     // Releasing the read lock has no effect on readers,
                     // but it may allow waiting writers to proceed if
                     // both read and write locks are now free.
