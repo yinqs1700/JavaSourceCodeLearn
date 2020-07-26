@@ -204,6 +204,7 @@ class BufferedInputStream extends FilterInputStream {
     }
 
     /**
+     * 向buffer填充数据，
      * Fills the buffer with more data, taking into account
      * shuffling and other tricks for dealing with marks.
      * Assumes that it is being called by a synchronized method.

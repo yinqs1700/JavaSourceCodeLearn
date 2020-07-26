@@ -214,7 +214,7 @@ public interface ExecutorService extends Executor {
         throws InterruptedException;
 
     /**
-     * 能够返回结果的任务执行方法
+     * 能够返回结果的任务执行方法,返回一个Future。
      * Submits a value-returning task for execution and returns a
      * Future representing the pending results of the task. The
      * Future's {@code get} method will return the task's result upon
@@ -255,6 +255,7 @@ public interface ExecutorService extends Executor {
     <T> Future<T> submit(Runnable task, T result);
 
     /**
+     * 提交Runnable执行，返回一个Future，当Future使用get方法之后会返回null
      * Submits a Runnable task for execution and returns a Future
      * representing that task. The Future's {@code get} method will
      * return {@code null} upon <em>successful</em> completion.

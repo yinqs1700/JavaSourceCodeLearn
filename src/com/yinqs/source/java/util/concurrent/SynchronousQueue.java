@@ -42,6 +42,7 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 
 /**
+ * 阻塞队列之中只能存在一个元素
  * A {@linkplain BlockingQueue blocking queue} in which each insert
  * operation must wait for a corresponding remove operation by another
  * thread, and vice versa.  A synchronous queue does not have any

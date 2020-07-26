@@ -19,6 +19,8 @@ import java.util.stream.IntStream;
  *  DiscardOldestPolicy：丢弃最老的任务（即将阻塞队列任务中的对头直接出队），
  *                       将传入的任务再放入队列
  *
+ *  线程池中，最好将偏向锁的标记关闭
+ *
  * @author yinqs
  */
 public class ThreadPoolTest {

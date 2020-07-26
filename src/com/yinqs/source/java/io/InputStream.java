@@ -26,9 +26,11 @@
 package java.io;
 
 /**
+ * 所有字节输入流的超类
  * This abstract class is the superclass of all classes representing
  * an input stream of bytes.
  *
+ * 如果应用需要子类化InputStream就必须要提供一个返回下一个输入字节的方法
  * <p> Applications that need to define a subclass of <code>InputStream</code>
  * must always provide a method that returns the next byte of input.
  *
@@ -49,6 +51,8 @@ public abstract class InputStream implements Closeable {
     private static final int MAX_SKIP_BUFFER_SIZE = 2048;
 
     /**
+     * 从输入流中读取下一个字节数据。返回的是int值，范围在0~255之间。如果由于到达了
+     * 字节流的最后没有可读的字节，那么就返回-1,。
      * Reads the next byte of data from the input stream. The value byte is
      * returned as an <code>int</code> in the range <code>0</code> to
      * <code>255</code>. If no byte is available because the end of the stream

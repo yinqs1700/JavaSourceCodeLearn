@@ -198,9 +198,14 @@ public class Executors {
     }
 
     /**
+     * 创建一个线程池，当需要线程的时候他就会创造新的线程，也会重用之前创建的线程。
      * Creates a thread pool that creates new threads as needed, but
      * will reuse previously constructed threads when they are
-     * available.  These pools will typically improve the performance
+     * available.
+     * 这种线程池能够明显提升短生命周期的异步任务的执行性能，当调用execute方法
+     * 的时候会重用之前已经构建的且可用的线程。如果不存在这种重用线程，那么会创建
+     * 一个新的线程并加入到线程池里面。
+     * These pools will typically improve the performance
      * of programs that execute many short-lived asynchronous tasks.
      * Calls to {@code execute} will reuse previously constructed
      * threads if available. If no existing thread is available, a new

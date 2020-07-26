@@ -24,15 +24,17 @@ public class ThreadPoolTest2 {
 
     public static void main(String[] args) {
         ThreadPoolExecutor threadPool = new ThreadPoolExecutor(3, 5, 0, TimeUnit.SECONDS,new LinkedBlockingQueue<>(3),new ThreadPoolExecutor.AbortPolicy());
-        IntStream.range(0,10).forEach(i->{
+
+        //[Running, pool size = 5, active threads = 5, queued tasks = 3, completed tasks = 0]
+        IntStream.range(0,9).forEach(i->{
             threadPool.submit(()->{
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(100);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
 
-                IntStream.range(0,50).forEach(j->{
+                IntStream.range(0,1).forEach(j->{
                     System.out.println(Thread.currentThread().getName());
                 });
             });
@@ -40,6 +42,5 @@ public class ThreadPoolTest2 {
 
         // 关闭线程池
         threadPool.shutdown();
-
     }
 }
