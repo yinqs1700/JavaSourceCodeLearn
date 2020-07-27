@@ -81,28 +81,44 @@ import java.util.*;
  *
  * <dt>Core and maximum pool sizes</dt>
  *
+ * 线程池会根据设定的corePoolSize和MaximumPoolSize来自动的调整线程池大小
  * <dd>A {@code ThreadPoolExecutor} will automatically adjust the
  * pool size (see {@link #getPoolSize})
  * according to the bounds set by
  * corePoolSize (see {@link #getCorePoolSize}) and
  * maximumPoolSize (see {@link #getMaximumPoolSize}).
  * <p>
+ *
+ * 当一个通过execute(Runnable)方法提交一个任务的时候，正在运行的线程数量若小于
+ * corePoolSize，就会创建新的线程来执行这个请求，即使worker线程中有空闲的线程。
  * When a new task is submitted in method {@link #execute(Runnable)},
  * and fewer than corePoolSize threads are running, a new thread is
  * created to handle the request, even if other worker threads are
- * idle.  If there are more than corePoolSize but less than
+ * idle.
+ *
+ * 如果超过了corePoolSize但是小于maximumPoolSize的线程正在运行，只有当阻塞
+ * 队列满了的时候才会创建新的线程来执行。
+ * If there are more than corePoolSize but less than
  * maximumPoolSize threads running, a new thread will be created only
- * if the queue is full.  By setting corePoolSize and maximumPoolSize
+ * if the queue is full.
+ * 将corePoolSize和maximumPoolSize设置相同，就是一个固定大小的线程池。
+ * By setting corePoolSize and maximumPoolSize
  * the same, you create a fixed-size thread pool. By setting
  * maximumPoolSize to an essentially unbounded value such as {@code
  * Integer.MAX_VALUE}, you allow the pool to accommodate an arbitrary
- * number of concurrent tasks. Most typically, core and maximum pool
+ * number of concurrent tasks.
+ * 通常来说，core和maximum的大小值取决于构造函数，但是也能够通过setCorePoolSize
+ * 和setMaximumPoolSize方法来动态的设定。
+ * Most typically, core and maximum pool
  * sizes are set only upon construction, but they may also be changed
  * dynamically using {@link #setCorePoolSize} and {@link
  * #setMaximumPoolSize}. </dd>
  *
  * <dt>On-demand construction</dt>
  *
+ * 默认情况下，核心线程只有当新任务达到的时候才会初始化创造和运行，但是
+ * 可以通过重写prestartCoreThread或者prestartAllCoreThreads来提前
+ * 创建线程，这种场景通常是你在创建线程池时传入了一个非空的队列。
  * <dd>By default, even core threads are initially created and
  * started only when new tasks arrive, but this can be overridden
  * dynamically using method {@link #prestartCoreThread} or {@link
@@ -111,6 +127,9 @@ import java.util.*;
  *
  * <dt>Creating new threads</dt>
  *
+ * 新线程通过ThreadFactory来创建，如果不特指出来，默认使用defaultThreadFactory
+ * 来创建线程，创建出来的线程是同一个线程组的线程，拥有正常的优先级，并且是非守护线程
+ * 的状态。
  * <dd>New threads are created using a {@link ThreadFactory}.  If not
  * otherwise specified, a {@link Executors#defaultThreadFactory} is
  * used, that creates threads to all be in the same {@link
@@ -128,9 +147,12 @@ import java.util.*;
  *
  * <dt>Keep-alive times</dt>
  *
+ * 当前线程池数量超过了核心线程数时，多余的空闲线程在超过了keepAliveTime的时间
+ * 时会被中止。
  * <dd>If the pool currently has more than corePoolSize threads,
  * excess threads will be terminated if they have been idle for more
  * than the keepAliveTime (see {@link #getKeepAliveTime(TimeUnit)}).
+ *
  * This provides a means of reducing resource consumption when the
  * pool is not being actively used. If the pool becomes more active
  * later, new threads will be constructed. This parameter can also be
@@ -144,6 +166,7 @@ import java.util.*;
  * keepAliveTime value is non-zero. </dd>
  *
  * <dt>Queuing</dt>
+ *
  *
  * <dd>Any {@link BlockingQueue} may be used to transfer and hold
  * submitted tasks.  The use of this queue interacts with pool sizing:
@@ -165,6 +188,7 @@ import java.util.*;
  * </ul>
  * <p>
  * There are three general strategies for queuing:
+ * 以下是三种常用策略的阻塞队列
  * <ol>
  *
  * <li> <em> Direct handoffs.</em> A good default choice for a work
@@ -386,10 +410,20 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * that workerCount is 0 (which sometimes entails a recheck -- see
      * below).
      */
-    // 线程池  状态3位，线程数量29位
+    // 线程池状态高3位，线程数量29位
     private final AtomicInteger ctl = new AtomicInteger(ctlOf(RUNNING, 0));
     private static final int COUNT_BITS = Integer.SIZE - 3;
     private static final int CAPACITY = (1 << COUNT_BITS) - 1;
+
+    /*
+        RUNNING 活动状态
+        SHUTDOWN 不在接收新的任务提交，不过线程池可以继续处理阻塞队列中的任务
+        STOP 不在接收新的任务，同时还会丢弃阻塞队列中正在排队的任务，还会中断正在
+             处理中的任务
+        TIDYING 所有的任务都执行完毕后，当前线程池中的活动的线程数量将为0，将会
+                调用terminated方法
+        TERMINATED 线程池的终止状态，terminated执行完毕之后，线程池会处于该状态
+     */
 
     // runState is stored in the high-order bits
     private static final int RUNNING = -1 << COUNT_BITS;
@@ -398,11 +432,12 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     private static final int TIDYING = 2 << COUNT_BITS;
     private static final int TERMINATED = 3 << COUNT_BITS;
 
-    // Packing and unpacking ctl
+    // Packing and unpacking ctl当前线程状态
     private static int runStateOf(int c) {
         return c & ~CAPACITY;
     }
 
+    // 线程池中运行的线程数
     private static int workerCountOf(int c) {
         return c & CAPACITY;
     }

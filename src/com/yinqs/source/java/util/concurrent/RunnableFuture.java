@@ -47,6 +47,7 @@ package java.util.concurrent;
  */
 public interface RunnableFuture<V> extends Runnable, Future<V> {
     /**
+     * 将Future设置为计算的结果除非任务被取消了
      * Sets this Future to the result of its computation
      * unless it has been cancelled.
      */

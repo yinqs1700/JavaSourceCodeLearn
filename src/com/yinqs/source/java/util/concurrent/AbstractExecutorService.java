@@ -88,6 +88,7 @@ public abstract class AbstractExecutorService implements ExecutorService {
     }
 
     /**
+     * 根据给定的Callable创建出一个FutureTask
      * Returns a {@code RunnableFuture} for the given callable task.
      *
      * @param callable the callable task being wrapped
@@ -103,6 +104,7 @@ public abstract class AbstractExecutorService implements ExecutorService {
     }
 
     /**
+     * 本质上也是调用execute方法
      * @throws RejectedExecutionException {@inheritDoc}
      * @throws NullPointerException       {@inheritDoc}
      */

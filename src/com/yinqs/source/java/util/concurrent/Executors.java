@@ -397,6 +397,7 @@ public class Executors {
     }
 
     /**
+     * 通过RunnableAdapter将Runnable封装成一个Callable对象返回
      * Returns a {@link Callable} object that, when
      * called, runs the given task and returns the given result.  This
      * can be useful when applying methods requiring a

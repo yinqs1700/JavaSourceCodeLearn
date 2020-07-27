@@ -56,6 +56,7 @@ import java.util.Collection;
  * unused {@code ExecutorService} should be shut down to allow
  * reclamation of its resources.
  *
+ * submit方法通过返回一个Future对象，能够用来取消执行或者等待该任务完成
  * <p>Method {@code submit} extends base method {@link
  * Executor#execute(Runnable)} by creating and returning a {@link Future}
  * that can be used to cancel execution and/or wait for completion.
@@ -140,10 +141,12 @@ import java.util.Collection;
 public interface ExecutorService extends Executor {
 
     /**
+     * 将之前提交的任务有序的关闭，并不会接受新任务。
      * Initiates an orderly shutdown in which previously submitted
      * tasks are executed, but no new tasks will be accepted.
      * Invocation has no additional effect if already shut down.
      *
+     * 这个方法不会等待之前提交的任务执行完毕。
      * <p>This method does not wait for previously submitted tasks to
      * complete execution.  Use {@link #awaitTermination awaitTermination}
      * to do that.
@@ -214,7 +217,8 @@ public interface ExecutorService extends Executor {
         throws InterruptedException;
 
     /**
-     * 能够返回结果的任务执行方法,返回一个Future。
+     * 能够返回结果的任务执行方法,返回一个Future，返回的Future通过get方法能
+     * 够获得任务执行成功的结果。
      * Submits a value-returning task for execution and returns a
      * Future representing the pending results of the task. The
      * Future's {@code get} method will return the task's result upon
@@ -240,6 +244,7 @@ public interface ExecutorService extends Executor {
     <T> Future<T> submit(Callable<T> task);
 
     /**
+     * 当Future返回的结果就是传入的result泛型的时候，就代表这个任务成功完成
      * Submits a Runnable task for execution and returns a Future
      * representing that task. The Future's {@code get} method will
      * return the given result upon successful completion.
