@@ -390,14 +390,19 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * time, but need not hit each state. The transitions are:
      * <p>
      * RUNNING -> SHUTDOWN
+     * 当调用了shutdown或者finalize方法之后状态改变
      * On invocation of shutdown(), perhaps implicitly in finalize()
      * (RUNNING or SHUTDOWN) -> STOP
+     * 调用shutdownNow之后状态改变
      * On invocation of shutdownNow()
      * SHUTDOWN -> TIDYING
+     * 当阻塞队列和线程池为空时
      * When both queue and pool are empty
      * STOP -> TIDYING
+     * 线程池为空时
      * When pool is empty
      * TIDYING -> TERMINATED
+     * terminated钩子方法被完成是
      * When the terminated() hook method has completed
      * <p>
      * Threads waiting in awaitTermination() will return when the
@@ -945,6 +950,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      */
 
     /**
+     * 检查一个worker是否能够在给定边界情况下，线程池状态情况下被添加
      * Checks if a new worker can be added with respect to current
      * pool state and the given bound (either core or maximum). If so,
      * the worker count is adjusted accordingly, and, if possible, a
@@ -973,6 +979,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         retry:
         for (; ; ) {
             int c = ctl.get();
+            // 获得线程池状态
             int rs = runStateOf(c);
 
             // Check if queue empty only if necessary.
@@ -983,11 +990,13 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
                 return false;
 
             for (; ; ) {
+                // 获取worker线程数
                 int wc = workerCountOf(c);
                 if (wc >= CAPACITY ||
                         wc >= (core ? corePoolSize : maximumPoolSize))
                     return false;
                 if (compareAndIncrementWorkerCount(c))
+                    // 增加线程数成功
                     break retry;
                 c = ctl.get();  // Re-read ctl
                 if (runStateOf(c) != rs)
@@ -1037,6 +1046,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     }
 
     /**
+     * 线程启动失败，回滚操作
      * Rolls back the worker thread creation.
      * - removes worker from workers, if present
      * - decrements worker count
@@ -1153,6 +1163,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     }
 
     /**
+     * 重复的重queue里面不断的获取任务并执行他们
      * Main worker run loop.  Repeatedly gets tasks from queue and
      * executes them, while coping with a number of issues:
      * <p>
@@ -1196,13 +1207,16 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * @param w the worker
      */
     final void runWorker(Worker w) {
+        // 获取当前线程对象
         Thread wt = Thread.currentThread();
         Runnable task = w.firstTask;
+        // 清理任务
         w.firstTask = null;
-        w.unlock(); // allow interrupts
+        w.unlock(); // allow interrupts 将state从-1变为0让线程可以被中断
         boolean completedAbruptly = true;
         try {
             while (task != null || (task = getTask()) != null) {
+                // 任务不为空
                 w.lock();
                 // If pool is stopping, ensure thread is interrupted;
                 // if not, ensure thread is not interrupted.  This
@@ -1212,6 +1226,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
                         (Thread.interrupted() &&
                                 runStateAtLeast(ctl.get(), STOP))) &&
                         !wt.isInterrupted())
+                    // 中断线程
                     wt.interrupt();
                 try {
                     beforeExecute(wt, task);
@@ -1454,7 +1469,9 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         }
         if (isRunning(c) && workQueue.offer(command)) {
             int recheck = ctl.get();
+            // 双重检查
             if (!isRunning(recheck) && remove(command))
+                // 线程池不在运行，回滚
                 reject(command);
             else if (workerCountOf(recheck) == 0)
                 addWorker(null, false);
