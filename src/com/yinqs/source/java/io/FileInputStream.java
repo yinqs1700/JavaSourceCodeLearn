@@ -30,10 +30,12 @@ import sun.nio.ch.FileChannelImpl;
 
 
 /**
+ * 从文件系统或的文件的字节。
  * A <code>FileInputStream</code> obtains input bytes
  * from a file in a file system. What files
  * are  available depends on the host environment.
  *
+ * FileInputStream代表读入原生字节。比如图片的文件，为了读入字符应该考虑使用FileReader
  * <p><code>FileInputStream</code> is meant for reading streams of raw bytes
  * such as image data. For reading streams of characters, consider using
  * <code>FileReader</code>.
