@@ -69,11 +69,14 @@ import java.util.concurrent.locks.LockSupport;
  * manipulating status and results, CompletableFuture implements
  * interface {@link CompletionStage} with the following policies: <ul>
  *
+ * 为完成依赖而提供的非异步方法可以被由完成了当前CompletableFuture的线程执行，
+ * 或者被其他的完成方法调用执行。
  * <li>Actions supplied for dependent completions of
  * <em>non-async</em> methods may be performed by the thread that
  * completes the current CompletableFuture, or by any other caller of
  * a completion method.</li>
  *
+ * 所有没有显性的执行器异步方法通过ForkJoinPool来执行。
  * <li>All <em>async</em> methods without an explicit Executor
  * argument are performed using the {@link ForkJoinPool#commonPool()}
  * (unless it does not support a parallelism level of at least two, in
@@ -82,6 +85,8 @@ import java.util.concurrent.locks.LockSupport;
  * tasks are instances of the marker interface {@link
  * AsynchronousCompletionTask}. </li>
  *
+ * 所有的CompletionStage的方法独立实现于其他所有的public方法，所有在子类中
+ * 重写一个方法不会影响其他的方法。
  * <li>All CompletionStage methods are implemented independently of
  * other public methods, so the behavior of one method is not impacted
  * by overrides of others in subclasses.  </li> </ul>
@@ -113,12 +118,21 @@ public class CompletableFuture<T> implements Future<T>, CompletionStage<T> {
     /*
      * Overview:
      *
+     * CompletableFuture可能具有依赖的完成动作，收集在链接栈中。它原子性
+     * 的通过CAS操作完成结果字段，然后弹出并运行这些操作。这个适用于正常与
+     * 异常结果，同步与异步动作，二进制触发器和各种形式的完成。
      * A CompletableFuture may have dependent completion actions,
      * collected in a linked stack. It atomically completes by CASing
      * a result field, and then pops off and runs those actions. This
      * applies across normal vs exceptional outcomes, sync vs async
      * actions, binary triggers, and various forms of completions.
      *
+     * 字段结果为非空（通过CAS设置）表示已完成。一个AltResult用于将null作
+     * 为结果，以及用于处理异常情况。使用单个字段使完成更容易检测并触发。编码
+     * 和解码非常简单但是会增加捕获和关联异常的范围与目标。较小的简化取决于
+     * （静态）NIL（框为空结果）是唯一具有空值的AltResult异常字段，因此我们
+     * 通常不需要显式比较。即使某些泛型转换未经检查（请参见SuppressWarnings
+     * 注释），它们被放置为即使已检查也适当。
      * Non-nullness of field result (set via CAS) indicates done.  An
      * AltResult is used to box null as a result, as well as to hold
      * exceptions.  Using a single field makes completion simple to
